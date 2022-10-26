@@ -3,6 +3,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory/paddr.h>
 
 static int is_batch_mode = false;
 
@@ -34,27 +35,99 @@ static int cmd_c(char *args) {
 
 
 static int cmd_q(char *args) {
-  return -1;
-}
+	nemu_state.state = NEMU_QUIT;
+	return -1;
+} 
+
 
 static int cmd_help(char *args);
 
 static int cmd_si(char *args) {
-  uint64_t n = strtoul(args, NULL, 0);  
+  int n = 1; // defalut is 1
+  if (args != NULL) {
+	  sscanf(args, "%d", &n);
+  }
   cpu_exec(n);
   return 0;
 }
 
 static int cmd_info(char *args) {
-	char *subcmd = strtok(args, " ");
-	if (strcmp(subcmd, "r") == 0) {
+	if (strcmp(args, "r") == 0) {
 		isa_reg_display();
-	} else if (strcmp(subcmd, "w") == 0) {
-		/* TODO */
+	} else if (strcmp(args, "w") == 0) {
+		watchpoint_display();
 	} else {
 		printf("Unknown subcmd.\n");
 	}
 	
+	return 0;
+}
+
+static int cmd_p(char *args) {
+  bool success = true;
+  uint32_t val = expr(args, &success);
+  assert(success);
+	
+	printf("%s = \e[1;36m%u\e[0m\n", args, val);
+	return 0;
+}
+
+static int cmd_px(char *args) {
+  bool success = true;
+  uint32_t val = expr(args, &success);
+  assert(success);
+	
+	printf("%s = \e[1;36m%#.8x\e[0m\n", args, val);
+	return 0;
+}
+
+static int cmd_w(char *args) {
+	bool success = true;
+	WP *point = new_wp(args, &success);
+	if (success) {
+		printf("Created a \e[1;36mWatchPoint(NO.%d)\e[0m: %s \n", point->NO, point->content);
+	} else {
+		printf("Create WatchPoint Error.\n");
+	}
+
+	return 0;
+}
+
+static int cmd_d(char *args) {
+	int no;
+	sscanf(args, "%d", &no);
+	free_wp(no);
+
+	return 0;
+}
+
+static int cmd_x(char *args) {
+	char *arg = strtok(NULL, " ");
+	int n = -1;
+	bool success = true;
+	paddr_t base = 0x80000000;
+	sscanf(arg, "%d", &n);// str to num
+	arg = arg + strlen(arg) + 1;
+	base = expr(arg, &success);
+
+	if (success) {
+		for (int i = 0; i < n; i ++) {
+			if ( i % 4 == 0 ) {
+				printf("\n\t\e[1;36m %#x: \e[0m\t", base + i * 4);
+			}
+			printf("0x");
+			for (int j = 3; j >= 0; j --) {
+				uint8_t *pos = guest_to_host(base+i*4+j);
+				printf("%.2x", *pos);
+			}
+			printf("\t");
+		}
+
+		printf("\n");
+	}	else {
+		printf("Error at x expr.\n");
+	}
+
 	return 0;
 }
 
@@ -70,6 +143,11 @@ static struct {
   /* TODO: Add more commands */
   {"si", "Single the execution of the instruction", cmd_si},
   {"info", "Print the reg/watchpoint informations", cmd_info},
+  {"p", "Print the expression value", cmd_p},
+	{"px", "Print the expression value in hex.", cmd_px},
+	{"w", "Set a watchpoint at expr.", cmd_w},
+	{"d", "Unset a watchpoint at expr", cmd_d},
+	{"x", "Print the memory value at expr", cmd_x},
 
 };
 

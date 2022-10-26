@@ -3,6 +3,7 @@
 #include <cpu/difftest.h>
 #include <isa-all-instr.h>
 #include <locale.h>
+#include "../monitor/sdb/sdb.h"
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -27,6 +28,9 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
+	if (check_all_watchpoints()) {
+		nemu_state.state = NEMU_STOP;
+	}
 }
 
 #include <isa-exec.h>
