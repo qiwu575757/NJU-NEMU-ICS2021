@@ -19,12 +19,24 @@ static bool g_print_step = false;
 const rtlreg_t rzero = 0;
 rtlreg_t tmp_reg[4];
 
+#ifdef CONFIG_ITRACE_COND
+#define RING_BUFFER_LEGTH 128
+#define RING_BUFFER_LINES 32
+char ring_buffer[RING_BUFFER_LINES][RING_BUFFER_LEGTH];
+
+#define RING_BUFFER_ELEMENT(i) ring_buffer[i % RING_BUFFER_LINES]
+int  ring_index = 0;
+#endif
+
 void device_update();
 void fetch_decode(Decode *s, vaddr_t pc);
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
+
   if (ITRACE_COND) log_write("%s\n", _this->logbuf);
+  strncpy(RING_BUFFER_ELEMENT(ring_index++), _this->logbuf, RING_BUFFER_LEGTH);
+
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
@@ -88,6 +100,23 @@ void fetch_decode(Decode *s, vaddr_t pc) {
 #endif
 }
 
+#ifdef CONFIG_ITRACE_COND
+
+static void print_instructions_ringsbuffer() {
+  printf(ASNI_FMT("--------------The nearest %d instructions-----------\n", ASNI_FG_RED), RING_BUFFER_LINES);
+
+  if (ring_index < RING_BUFFER_LINES) {
+    for (int i = 0; i < ring_index; i++ ) {
+      printf(ASNI_FMT("%s\n", ASNI_BG_BLACK), RING_BUFFER_ELEMENT(i));
+    }
+  } else {
+    for (int i = ring_index - RING_BUFFER_LINES; i < ring_index; i++) {
+      printf(ASNI_FMT("%s\n", ASNI_BG_BLACK), RING_BUFFER_ELEMENT(i));
+    }
+  }
+}
+
+#endif
 /* Simulate how the CPU works. */
 void cpu_exec(uint64_t n) {
   g_print_step = (n < MAX_INSTR_TO_PRINT);
@@ -115,7 +144,11 @@ void cpu_exec(uint64_t n) {
   switch (nemu_state.state) {
     case NEMU_RUNNING: nemu_state.state = NEMU_STOP; break;
 
-    case NEMU_END: case NEMU_ABORT:
+    case NEMU_ABORT:
+      #ifdef CONFIG_ITRACE_COND
+        print_instructions_ringsbuffer();
+      #endif
+    case NEMU_END: 
       Log("nemu: %s at pc = " FMT_WORD,
           (nemu_state.state == NEMU_ABORT ? ASNI_FMT("ABORT", ASNI_FG_RED) :
            (nemu_state.halt_ret == 0 ? ASNI_FMT("HIT GOOD TRAP", ASNI_FG_GREEN) :
