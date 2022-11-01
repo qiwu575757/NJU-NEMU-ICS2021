@@ -12,6 +12,9 @@ int printf(const char *fmt, ...) {
   va_start(ap, fmt);
   int len = vsprintf(buffer, fmt, ap);
 
+  // for (int i = 0; i < len; i++) {
+  //   putch(buffer[i]);
+  // }
   putstr(buffer);
 
   va_end(ap);
@@ -45,12 +48,14 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
           case 'c':
             print_c = (char) va_arg(ap, int);
             out[j++] = print_c;
+            state = START;
             break;
           case 's':
             print_s = va_arg(ap, char *);
             for (int k = 0; print_s[k] != '\0'; k++) {
               out[j++] = print_s[k];
             }
+            state = START;
             break;
           case 'd':
             print_d = va_arg(ap, int);
@@ -68,13 +73,13 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
               num /= 10;
             }
             j += num_len;
+            state = START;
             break;
           
-          default:
-            panic("Not implemented");
+          default: // 这里对打印精度、位宽的处理有问题。
+            state = RUN;
             break;
         }
-        state = START;
         break;
       
       default:
