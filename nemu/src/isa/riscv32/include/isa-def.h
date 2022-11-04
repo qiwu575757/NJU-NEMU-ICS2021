@@ -11,6 +11,13 @@ typedef struct {
   vaddr_t pc;
 } riscv32_CPU_state;
 
+typedef struct {
+  rtlreg_t mepc;
+  rtlreg_t mstatus;
+  rtlreg_t mcause;
+  rtlreg_t mtvec;
+} riscv32_CSR_state;
+
 // decode
 typedef struct {
   union {

@@ -19,6 +19,17 @@ static inline void outl(uintptr_t addr, uint32_t data) { *(volatile uint32_t *)a
 #define PTE_A 0x40
 #define PTE_D 0x80
 
+#define Supervisor_software_interrupt 1
+#define Virtual_supervisor_software_interrupt 2
+#define Machine_software_interrupt 3
+#define Supervisor_timer_interrupt 5
+#define Virtual_supervisor_timer_interrupt 6
+#define Machine_timer_interrupt 7
+#define Supervisor_external_interrupt 9
+#define Virtual_supervisor_external_interrupt 10
+#define Machine_external_interrupt 11
+#define Supervisor_guest_external_interrupt 12
+
 enum { MODE_U, MODE_S, MODE_M = 3 };
 #define MSTATUS_MXR  (1 << 19)
 #define MSTATUS_SUM  (1 << 18)
