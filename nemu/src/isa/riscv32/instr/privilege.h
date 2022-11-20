@@ -54,9 +54,6 @@ def_EHelper(mret) {
     // risc 将是否 +4 交给软件处理
     rtl_addi(s, s0, &(csr.mepc), 4);
     rtl_mv(s, &s->dnpc, s0);
-
-    // rtl_mv(s, &s->dnpc, &(csr.mepc));
 }
-
 
 
