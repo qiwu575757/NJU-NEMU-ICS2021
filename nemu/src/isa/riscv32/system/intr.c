@@ -7,8 +7,8 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   csr.mepc = epc;
   csr.mcause = NO;
 
-  printf("mtvec = %#x\n", (word_t)csr.mtvec);
-  printf("mepc = %#x\n", (word_t)csr.mepc);
+  // printf("mtvec = %#x\n", (word_t)csr.mtvec);
+  // printf("mepc = %#x\n", (word_t)csr.mepc);
   return (word_t)csr.mtvec;
 }
 

@@ -86,6 +86,9 @@ int fs_open(const char *pathname, int flags, int mode)
       return fd;
     }
   }
+
+  printf("pahtname = %s\n", pathname);
+  panic("Couldn't find the file.");
   return -1;
 }
 
@@ -93,7 +96,7 @@ size_t fs_write(int fd, const void *buf, size_t len)
 {
   if (fd == 0)
     panic("should never write to stdin");
-  // assert(fd >= 0 && fd < NR_FILE);
+    
   if (fd > 0 && fd < 5)
     return file_table[fd].write(buf, 0, len);
   if (fd >= 5 && fd < NR_FILE)
@@ -111,23 +114,17 @@ size_t fs_write(int fd, const void *buf, size_t len)
 
 size_t fs_read(int fd, void *buf, size_t len)
 {
-  // printf("read fd is %d, size is %d, offset is %d, to read len is %d\n", fd, file_table[fd].size, file_table[fd].open_offset, len);
   assert(fd > 0 && fd < NR_FILE);
+
   if (fd > 0 && fd < 5)
     return file_table[fd].read(buf, 0, len);
   if (fd >= 5 && fd < NR_FILE)
   {
     len = min(len, file_table[fd].size - file_table[fd].open_offset);
-    // if (len == 0)
-    //   return 0;
-    // printf("read some thing from %d with size %d\n", file_table[fd].disk_offset + file_table[fd].open_offset, len);
     size_t count = file_table[fd].read(buf, file_table[fd].disk_offset + file_table[fd].open_offset, len);
-    // printf("len is %d\n", count);
-    // printf("read open_offset is %d, size is %d, res is %d\n", file_table[fd].open_offset, file_table[fd].size, file_table[fd].open_offset < file_table[fd].size);
     file_table[fd].open_offset += count;
-    // printf("read open_offset is %d, size is %d, res is %d\n", file_table[fd].open_offset, file_table[fd].size, file_table[fd].open_offset < file_table[fd].size);
     assert((file_table[fd].open_offset <= file_table[fd].size));
-    // printf("count is %d\n", count);
+
     return count;
   }
   else
@@ -136,23 +133,21 @@ size_t fs_read(int fd, void *buf, size_t len)
 
 size_t fs_lseek(int fd, size_t offset, int whence)
 {
-  // printf("change seek\n");
   assert(fd > 4 && fd < NR_FILE);
   switch (whence)
   {
-  case SEEK_SET:
-    file_table[fd].open_offset = offset;
-    break;
-  case SEEK_CUR:
-    file_table[fd].open_offset += offset;
-    break;
-  case SEEK_END:
-    file_table[fd].open_offset = file_table[fd].size + offset;
-    break;
-  default:
-    return -1;
+    case SEEK_SET:
+      file_table[fd].open_offset = offset;
+      break;
+    case SEEK_CUR:
+      file_table[fd].open_offset += offset;
+      break;
+    case SEEK_END:
+      file_table[fd].open_offset = file_table[fd].size + offset;
+      break;
+    default:
+      return -1;
   }
-  // printf("offset is %d\n", file_table[fd].open_offset);
   return file_table[fd].open_offset;
 }
 

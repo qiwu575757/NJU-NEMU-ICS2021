@@ -11,23 +11,23 @@ void sys_yield(Context *c){
 
 void naive_uload(PCB *pcb, const char *filename);
 
-// static int execve(const char *pathname, char *const argv[], char *const envp[]) {
-//   // printf("pathname is %s\n", pathname);
-//   int fd = fs_open(pathname, 0, 0);
-//   if(fd == -1) {return -1;}
-//   else fs_close(fd);
+static int execve(const char *pathname, char *const argv[], char *const envp[]) {
+  int fd = fs_open(pathname, 0, 0);
+  if(fd == -1) {return -1;}
+  else fs_close(fd);
 
-//   // char* pathname2 = "/bin/pal";
-//   // printf("brk is %p\n",heap_brk);
-//   naive_uload(NULL, pathname);
+  naive_uload(NULL, pathname);
 
-//   return 0;
-// }
-
+  return 0;
+}
 
 void sys_exit(Context *c){
   int status = (int)c->GPR2;
-  halt(status);
+  if (status == 0) {
+    execve("/bin/menu", NULL, NULL);
+  } else {
+    halt(status);
+  }
 }
 
 void sys_execve(Context *c){
@@ -64,16 +64,6 @@ void sys_lseek(Context *c){
   int ret = fs_lseek(c->GPR2, c->GPR3, c->GPR4);
   c->GPRx = ret;
 }
-
-// struct __temp{
-//  #if __SIZEOF_POINTER__ == 8
-//   __uint64_t sec;
-//   __uint64_t usec;
-//  #elif __SIZEOF_POINTER__ == 4
-//   __uint32_t sec;
-//   __uint32_t usec;
-// #endif
-// };
 
 void sys_gettimeofday(Context *c){
   struct timeval *tv = (struct timeval *)c->GPR2;
