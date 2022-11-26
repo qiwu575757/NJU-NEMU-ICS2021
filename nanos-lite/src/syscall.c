@@ -10,30 +10,29 @@ void sys_yield(Context *c){
 }
 
 void naive_uload(PCB *pcb, const char *filename);
+int execve(const char *pathname, char *const argv[], char *const envp[]);
 
-static int execve(const char *pathname, char *const argv[], char *const envp[]) {
-  int fd = fs_open(pathname, 0, 0);
-  if(fd == -1) {return -1;}
-  else fs_close(fd);
+// static int execve(const char *pathname, char *const argv[], char *const envp[]) {
+//   int fd = fs_open(pathname, 0, 0);
+//   if(fd == -1) {return -1;}
+//   else fs_close(fd);
 
-  naive_uload(NULL, pathname);
+//   naive_uload(NULL, pathname);
 
-  return 0;
-}
+//   return 0;
+// }
 
 void sys_exit(Context *c){
   int status = (int)c->GPR2;
   if (status == 0) {
-    execve("/bin/menu", NULL, NULL);
+    execve("/bin/nterm", NULL, NULL);
   } else {
     halt(status);
   }
 }
 
 void sys_execve(Context *c){
-  const char *fname = (const char *)c->GPR2;
-  naive_uload(NULL, fname);
-  c->GPRx = 0;
+  c->GPRx = execve((const char *)c->GPR2, (char **const)c->GPR3, (char **const)c->GPR4);
 }
 
 void sys_write(Context *c){

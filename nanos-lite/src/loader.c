@@ -12,16 +12,6 @@
 #endif
 
 
-// 从ramdisk中`offset`偏移处的`len`字节读入到`buf`中
-// size_t ramdisk_read(void *buf, size_t offset, size_t len);
-
-// 把`buf`中的`len`字节写入到ramdisk中`offset`偏移处
-// size_t ramdisk_write(const void *buf, size_t offset, size_t len);
-
-// 返回ramdisk的大小, 单位为字节
-// size_t get_ramdisk_size();
-
-
 static uintptr_t loader(PCB *pcb, const char *filename) {
   Elf_Ehdr ehdr;
   
@@ -74,3 +64,73 @@ void naive_uload(PCB *pcb, const char *filename) {
   ((void(*)())entry) ();
 }
 
+int ptr_len(char *const argv[]) {
+  int len = 0;
+  while (argv[len] != NULL) {
+    len++;
+  }
+
+  return len;
+}
+
+Context *context_kload(PCB *pcb, void (*entry)(void *), void *arg)
+{
+  Area kstack = RANGE(pcb, (char *)pcb + STACK_SIZE);
+  
+  return kcontext(kstack, entry, arg);
+}
+
+Context *context_uload(PCB *pcb, const char *filename, char *const argv[], char *const envp[]) {
+  Area kstack = RANGE(pcb, (char *)pcb + STACK_SIZE);
+
+  // reverse fill the ustack with argc, argv, envp, string...
+  int argc = (argv == NULL) ? 0 : ptr_len(argv);
+  int envc = (envp == NULL) ? 0 : ptr_len(envp);
+
+  // malloc temp argv 
+  char *args[argc];
+  char *envs[envc];
+
+  // get stack pointer
+  char *sp = (char *)new_page(8) + 8 * PGSIZE;
+
+  // fill the argc string to string segment
+  for (int i = 0; i < argc; i++) {
+    sp -= (strlen(argv[i]) + 1);
+    strcpy(sp, argv[i]);
+    args[i] = sp;
+  }
+
+  // fill the envp string to string segment
+  for (int i = 0; i < envc; i++) {
+    sp -= (strlen(envp[i]) + 1);
+    strcpy(sp, envp[i]);
+    envs[i] = sp;
+  }
+
+  // fill the point to string in stack
+  char **spp = (char **)sp;
+
+  spp--;
+  *spp = NULL; 
+  for (int i = envc-1; i >= 0; i--) {
+    spp--;
+    *spp = envs[i];
+  }
+
+  spp--;
+  *spp = NULL; 
+  for (int i = argc-1; i >= 0; i--) {
+    spp--;
+    *spp = args[i];
+  }
+
+  spp--;
+  *((int *)spp) = argc;
+
+  uintptr_t entry = loader(pcb, filename);
+  Context *ctx = ucontext(NULL, kstack, (void *)entry);
+  // ctx->GPRx = (uintptr_t)spp;
+
+  return ctx;
+}

@@ -19,7 +19,7 @@ static bool g_print_step = false;
 const rtlreg_t rzero = 0;
 rtlreg_t tmp_reg[4];
 
-CSR_state csr = {.mstatus = 0x1800 };
+CSR_state csr = {.mstatus.value = 0x1800 };
 
 #ifdef CONFIG_ITRACE_COND
 #define RING_BUFFER_LEGTH 128

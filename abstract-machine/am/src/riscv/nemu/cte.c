@@ -8,18 +8,24 @@ Context* __am_irq_handle(Context *c) {
   if (user_handler) {
     Event ev = {0};
     switch (c->mcause) {
-      case Machine_external_interrupt:
+      case Machine_Software_Interrupt:
+      case User_Software_Interrupt:
         if (c->GPR1 == -1){ // 特指-1
           ev.event = EVENT_YIELD;
         }else {
           ev.event = EVENT_SYSCALL;
         }
+        c->mepc += 4;
         break;
 
 
-      default: ev.event = EVENT_ERROR; break;
+      default: 
+        ev.event = EVENT_ERROR; 
+        assert(0);
+        break;
     }
 
+    // printf("ev event = %d\n", ev.event);
     c = user_handler(ev, c);
     assert(c != NULL);
   }
@@ -40,7 +46,13 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
 }
 
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
-  return NULL;
+  Context *ctx = (Context *)((uint8_t *)kstack.end - sizeof(Context));
+  ctx->mepc = (uintptr_t)entry;
+  ctx->GPRx = (uintptr_t)arg;
+  ctx->gpr[0] = 0;
+  ctx->mstatus = 0x1800;
+
+  return ctx;
 }
 
 void yield() {

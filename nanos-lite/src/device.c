@@ -20,6 +20,7 @@ static AM_GPU_FBDRAW_T gpu_fbdraw;
 
 size_t serial_write(const void *buf, size_t offset, size_t len)
 {
+  yield();
   char *str = (char *)buf;
   for (size_t i = 0; i < len; ++i)
   {
@@ -29,6 +30,7 @@ size_t serial_write(const void *buf, size_t offset, size_t len)
 }
 
 size_t events_read(void *buf, size_t offset, size_t len) {
+  yield();
   static AM_INPUT_KEYBRD_T kbd;
   ioe_read(AM_INPUT_KEYBRD, &kbd);
   if (kbd.keycode == AM_KEY_NONE)
@@ -67,6 +69,7 @@ static char *_itoa(int num, char nums[]) {
 }
 
 size_t dispinfo_read(void *buf, size_t offset, size_t len) {
+  yield();
   int width = gpu_config.width, height = gpu_config.height;
 
   char nums[NUM_LINGTH];
@@ -80,6 +83,7 @@ size_t dispinfo_read(void *buf, size_t offset, size_t len) {
 }
 
 size_t fb_write(const void *buf, size_t offset, size_t len) {
+  yield();
   //另外我们约定每次绘图后总是马上将frame buffer中的内容同步到屏幕上.
     if (len == 0)
     {

@@ -49,7 +49,10 @@ __am_asm_trap:
 
   mv a0, sp
   jal __am_irq_handle
-
+  
+  # 将栈顶指针切换到新进程的上下文结构, 然后才恢复上下文, 从而完成上下文切换的本质操作
+  mv sp, a0 
+  
   LOAD t1, OFFSET_STATUS(sp)
   LOAD t2, OFFSET_EPC(sp)
   csrw mstatus, t1

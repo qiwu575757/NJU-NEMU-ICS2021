@@ -21,10 +21,11 @@ static inline void outl(uintptr_t addr, uint32_t data) { *(volatile uint32_t *)a
 
 #define Supervisor_software_interrupt 1
 #define Virtual_supervisor_software_interrupt 2
-#define Machine_software_interrupt 3
+#define Machine_Software_Interrupt 3
 #define Supervisor_timer_interrupt 5
 #define Virtual_supervisor_timer_interrupt 6
 #define Machine_timer_interrupt 7
+#define User_Software_Interrupt 8
 #define Supervisor_external_interrupt 9
 #define Virtual_supervisor_external_interrupt 10
 #define Machine_external_interrupt 11
