@@ -11,7 +11,9 @@ void* new_page(size_t nr_page) {
 
 #ifdef HAS_VME
 static void* pg_alloc(int n) {
-  return NULL;
+  assert(n%PGSIZE == 0);// 分配字节空间为 pagesize的整数倍
+  void* p = new_page(n / PGSIZE);
+  return memset(p, 0, n);
 }
 #endif
 
